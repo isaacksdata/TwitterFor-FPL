@@ -29,17 +29,24 @@ def setupParser(tweetFilename: str, tweeterFilename: str) -> ResponseParser:
     return Parser
 
 
+def removeDuplicates(tweetFilename: str, tweeterFilename: str):
+    tweetData = pd.read_csv(tweetFilename)
+    tweeterData = pd.read_csv(tweeterFilename)
+    tweeterData = tweeterData.sort_values('nTweets').drop_duplicates('authorId', keep='last')
+    tweetData = tweetData.sort_values('dateCreated').drop_duplicates('tweetId', keep='last')
+    tweeterData.to_csv(tweeterFilename)
+    tweetData.to_csv(tweetFilename)
+
+
+
 if __name__ == '__main__':
     tweetFileName = 'tweet_data.csv'
     tweeterFileName = 'tweeter_data.csv'
-    if os.path.exists(tweetFileName):
-        os.remove(tweetFileName)
-    if os.path.exists(tweeterFileName):
-        os.remove(tweeterFileName)
-    setupCSVFiles(tweetFileName, tweeterFileName)
+    if not os.path.exists(tweetFileName):
+        setupCSVFiles(tweetFileName, tweeterFileName)
     myParser = setupParser(tweetFileName, tweeterFileName)
     myAPI = TwitterAPI()
-    players = ['Jota', 'Salah', 'Ronaldo', 'Coutinho', 'Ramsey']
+    players = ['Jota', 'Salah', 'Ronaldo', 'Coutinho', 'Ramsey', 'Pukki', 'Wilson', 'Lukaku']
     tweetsCounter = 0
     for player in tqdm.tqdm(players):
         nextToken = None
@@ -53,9 +60,9 @@ if __name__ == '__main__':
                 nextToken = response[0]['meta']['next_token']
             else:
                 flag = False
+                removeDuplicates(tweetFileName, tweeterFileName)
                 time.sleep(5)
     print(f'Number of tweets pulled = {tweetsCounter}')
-    # todo remove duplicate tweets by player while adding tweets
     tweetData = pd.read_csv(tweetFileName)
     tweeterData = pd.read_csv(tweeterFileName)
     tweeterData = tweeterData.sort_values('nTweets').drop_duplicates('authorId', keep='last')
