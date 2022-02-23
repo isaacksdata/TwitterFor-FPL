@@ -1,6 +1,8 @@
 import warnings
 import csv
 
+from TweetFormatting import TweetFormatter
+
 warnings.filterwarnings("ignore", category=FutureWarning)
 
 
@@ -9,6 +11,7 @@ class ResponseParser:
         self.tweetDataFileName = tweetDataFileName
         self.tweeterDataFileName = tweeterDataFileName
         self.jsonResult = None
+        self.Formatter = TweetFormatter()
 
     def parseJSONResult(self, result: tuple) -> int:
         self.jsonResult, query = result
@@ -33,6 +36,8 @@ class ResponseParser:
                 nLikes = metrics['like_count']
                 nQuotes = metrics['quote_count']
                 engagement = self.getEngagement(nReTweets, nReplies, nLikes, nQuotes)
+                self.Formatter.setTweet(tweet['text'])
+                self.Formatter.processTweet()
                 newData = [
                     tweet['author_id'],
                     tweet['id'],
