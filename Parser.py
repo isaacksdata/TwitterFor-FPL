@@ -11,7 +11,9 @@ class ResponseParser:
         self.tweetDataFileName = tweetDataFileName
         self.tweeterDataFileName = tweeterDataFileName
         self.jsonResult = None
-        self.Formatter = TweetFormatter()
+        self.Formatter = TweetFormatter(useSpellCheck=False, useLemma=True, removeStopWords=True)
+        self.Formatter.setupNlp()
+        self.Formatter.setupStopWords()
 
     def parseJSONResult(self, result: tuple) -> int:
         self.jsonResult, query = result
@@ -49,7 +51,8 @@ class ResponseParser:
                     nLikes,
                     nQuotes,
                     engagement,
-                    tweet['text']]
+                    tweet['text'],
+                    self.Formatter.getProcessedTweet()]
                 csvWriter.writerow(newData)
         csvFile.close()
 

@@ -13,7 +13,7 @@ def setupCSVFiles(tweetFilename: str, tweeterFilename: str):
     csvWriterTweet = csv.writer(csvFileTweet)
     csvWriterTweet.writerow(['authorId', 'tweetId', 'query', 'language', 'dateCreated',
                              'nReTweets', 'nReplies', 'nLikes', 'nQuotes', 'engagement',
-                             'text'])
+                             'text', 'formattedText'])
     csvFileTweet.close()
 
     csvFileTweeter = open(tweeterFilename, "a", newline="", encoding='utf-8')
