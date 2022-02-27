@@ -1,5 +1,8 @@
 import warnings
 import csv
+import tqdm
+
+from TweetFormatting import TweetFormatter
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
@@ -9,6 +12,9 @@ class ResponseParser:
         self.tweetDataFileName = tweetDataFileName
         self.tweeterDataFileName = tweeterDataFileName
         self.jsonResult = None
+        self.Formatter = TweetFormatter(useSpellCheck=False, useLemma=True, removeStopWords=True)
+        self.Formatter.setupNlp()
+        self.Formatter.setupStopWords()
 
     def parseJSONResult(self, result: tuple) -> int:
         self.jsonResult, query = result
@@ -21,7 +27,7 @@ class ResponseParser:
     def parseTweetData(self, tweets: list, query: str):
         csvFile = open(self.tweetDataFileName, "a", newline="", encoding='utf-8')
         csvWriter = csv.writer(csvFile)
-        for tweet in tweets:
+        for tweet in tqdm.tqdm(tweets, position=0, leave=True):
             try:
                 assert query.lower() in tweet['text'].lower()
             except AssertionError:
@@ -33,6 +39,8 @@ class ResponseParser:
                 nLikes = metrics['like_count']
                 nQuotes = metrics['quote_count']
                 engagement = self.getEngagement(nReTweets, nReplies, nLikes, nQuotes)
+                self.Formatter.setTweet(tweet['text'])
+                self.Formatter.processTweet()
                 newData = [
                     tweet['author_id'],
                     tweet['id'],
@@ -44,7 +52,8 @@ class ResponseParser:
                     nLikes,
                     nQuotes,
                     engagement,
-                    tweet['text']]
+                    tweet['text'],
+                    ' '.join(self.Formatter.getProcessedTweet())]
                 csvWriter.writerow(newData)
         csvFile.close()
 
