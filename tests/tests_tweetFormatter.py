@@ -151,3 +151,46 @@ class TestUtilityFunctions(unittest.TestCase):
             else:
                 self.assertTupleEqual(tuple(self.tweetFormatter.processedTweet), result['result'],
                                       f'Failed to correctly process {test}')
+
+    def test_removeNewLineMarkers(self):
+        print('---------- Testing removeNewLineMarkers -----------------')
+        testCases ={
+            '\n\n\n': '   ',
+            '12\n3': '12 3',
+            '123': '123'
+        }
+
+        for test, result in testCases.items():
+            self.assertEqual(self.tweetFormatter.removeNewLineMarkers(test), result, 'Failed to remove new line '
+                                                                                     f'markers for {test}')
+
+    def test_removeUrls(self):
+        print('---------- Testing removeUrls -----------------')
+        testCases ={
+            'https://t.co/FAMt6HOBQg': '',
+            '123  https://t.co/FAMt6HOBQg': '123  ',
+            '123': '123'
+        }
+        for test, result in testCases.items():
+            self.assertEqual(self.tweetFormatter.removeUrls(test), result, f'Failed to remove URL from {test}')
+
+    def test_isAscii(self):
+        print('---------- Testing isAscii -----------------')
+        testCases = {
+            '23784659hbsdygf': True,
+            'hbukyf78687Ä': False,
+            'Äôve': False,
+            'uf8ffü§ûuf8ffüè': False
+        }
+        for test, result in testCases.items():
+            self.assertEqual(self.tweetFormatter.isAscii(test), result, f'Failed to return correct bool for {test}')
+
+    def test_processSpecialCharacters(self):
+        print('---------- Testing processSpecialCharacters -----------------')
+        testCases = {
+            'This phrase is all ascii': 'This phrase is all ascii',
+            'ÄÄÄ ô Äôd, ü§û': '',
+            'This phrÄse has sôme ascii': 'This has ascii'
+        }
+        for test, result in testCases.items():
+            self.assertEqual(self.tweetFormatter.processSpecialCharacters(test), result, f'Failed to process {test}')

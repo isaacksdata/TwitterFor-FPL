@@ -34,9 +34,9 @@ def removeDuplicates(tweetFilename: str, tweeterFilename: str):
     tweeterData = pd.read_csv(tweeterFilename)
     tweeterData = tweeterData.sort_values('nTweets').drop_duplicates('authorId', keep='last')
     tweetData = tweetData.sort_values('dateCreated').drop_duplicates('tweetId', keep='last')
+    tweetData = tweetData.sort_values('engagement').drop_duplicates('formattedText', keep='first')
     tweeterData.to_csv(tweeterFilename)
     tweetData.to_csv(tweetFilename)
-
 
 
 if __name__ == '__main__':
@@ -46,7 +46,7 @@ if __name__ == '__main__':
         setupCSVFiles(tweetFileName, tweeterFileName)
     myParser = setupParser(tweetFileName, tweeterFileName)
     myAPI = TwitterAPI()
-    players = ['Jota', 'Salah', 'Ronaldo', 'Coutinho', 'Ramsey', 'Pukki', 'Wilson', 'Lukaku']
+    players = ['Jota']
     tweetsCounter = 0
     for player in tqdm.tqdm(players):
         nextToken = None

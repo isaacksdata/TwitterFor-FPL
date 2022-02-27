@@ -1,5 +1,6 @@
 import warnings
 import csv
+import tqdm
 
 from TweetFormatting import TweetFormatter
 
@@ -26,7 +27,7 @@ class ResponseParser:
     def parseTweetData(self, tweets: list, query: str):
         csvFile = open(self.tweetDataFileName, "a", newline="", encoding='utf-8')
         csvWriter = csv.writer(csvFile)
-        for tweet in tweets:
+        for tweet in tqdm.tqdm(tweets, position=0, leave=True):
             try:
                 assert query.lower() in tweet['text'].lower()
             except AssertionError:
@@ -52,7 +53,7 @@ class ResponseParser:
                     nQuotes,
                     engagement,
                     tweet['text'],
-                    self.Formatter.getProcessedTweet()]
+                    ' '.join(self.Formatter.getProcessedTweet())]
                 csvWriter.writerow(newData)
         csvFile.close()
 

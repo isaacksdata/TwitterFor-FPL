@@ -3,8 +3,10 @@ This script contains functionality to format tweets ready for deep NLP solutions
 """
 import spacy
 import string
+from string import ascii_letters, digits
 import re
 import contextualSpellCheck
+import unicodedata
 
 
 punctuation = string.punctuation
@@ -41,8 +43,11 @@ class TweetFormatter:
     def processTweet(self) -> bool:
         if self.tweet is not None:
             if not self.checkWhiteSpace(self.tweet) and self.tweet != '':
-                self.processedTweet = self.removePunctuation(self.tweet)
+                self.processedTweet = self.removeUrls(self.tweet)
+                self.processedTweet = self.removePunctuation(self.processedTweet)
                 self.processedTweet = self.removeEmojis(self.processedTweet)
+                self.processedTweet = self.removeNewLineMarkers(self.processedTweet)
+                self.processedTweet = self.processSpecialCharacters(self.processedTweet)
                 if self.spellCheck:
                     self.processedTweet = self.checkSpelling(self.processedTweet)
                 if self.useLemmatize:
@@ -54,6 +59,25 @@ class TweetFormatter:
                 return False
         else:
             return False
+
+    @staticmethod
+    def isAscii(text: str) -> bool:
+        r = [i for i in text if i not in ascii_letters and i not in digits]
+        if len(r) > 0:
+            return False
+        else:
+            return True
+
+    def processSpecialCharacters(self, text: str) -> str:
+        return ' '.join([i for i in text.split(' ') if self.isAscii(i)])
+
+    def removeNewLineMarkers(self, text: str):
+        text = text.replace('\n', ' ')
+        return text
+
+    def removeUrls(self, text: str):
+        text = re.sub(r"\S*https?:\S*", "", text, flags=re.MULTILINE)
+        return text
 
     def removePunctuation(self, text: str) -> str:
         for i in punctuation:
