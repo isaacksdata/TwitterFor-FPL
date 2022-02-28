@@ -15,6 +15,7 @@ class TwitterAPI:
 
     def auth(self):
         auth = Authoriser()
+        _ = auth.auth()
         token = auth.getBearerToken()
         if token is not None:
             self.bearerToken = token
