@@ -3,15 +3,17 @@ import csv
 import os
 import tqdm
 import time
+import random
 
 from TwitterAPI import TwitterAPI
 from Parser import ResponseParser
+from FplApi import FplData
 
 
 def setupCSVFiles(tweetFilename: str, tweeterFilename: str):
     csvFileTweet = open(tweetFilename, "a", newline="", encoding='utf-8')
     csvWriterTweet = csv.writer(csvFileTweet)
-    csvWriterTweet.writerow(['authorId', 'tweetId', 'query', 'language', 'dateCreated',
+    csvWriterTweet.writerow(['authorId', 'tweetId', 'query', 'player', 'language', 'dateCreated',
                              'nReTweets', 'nReplies', 'nLikes', 'nQuotes', 'engagement',
                              'text', 'formattedText'])
     csvFileTweet.close()
@@ -19,13 +21,14 @@ def setupCSVFiles(tweetFilename: str, tweeterFilename: str):
     csvFileTweeter = open(tweeterFilename, "a", newline="", encoding='utf-8')
     csvWriterTweeter = csv.writer(csvFileTweeter)
     csvWriterTweeter.writerow(['authorId', 'username', 'verified', 'name', 'dateCreated',
-                               'nFollowers', 'nFollowing', 'nTweets', 'description', 'popularity',
-                               'reach'])
+                               'nFollowers', 'nFollowing', 'nTweets', 'popularity',
+                               'reach', 'description'])
     csvFileTweeter.close()
 
 
-def setupParser(tweetFilename: str, tweeterFilename: str) -> ResponseParser:
+def setupParser(tweetFilename: str, tweeterFilename: str, playerNames: list) -> ResponseParser:
     Parser = ResponseParser(tweetFilename, tweeterFilename)
+    Parser.setPlayerNames(playerNames)
     return Parser
 
 
@@ -35,8 +38,8 @@ def removeDuplicates(tweetFilename: str, tweeterFilename: str):
     tweeterData = tweeterData.sort_values('nTweets').drop_duplicates('authorId', keep='last')
     tweetData = tweetData.sort_values('dateCreated').drop_duplicates('tweetId', keep='last')
     tweetData = tweetData.sort_values('engagement').drop_duplicates('formattedText', keep='first')
-    tweeterData.to_csv(tweeterFilename)
-    tweetData.to_csv(tweetFilename)
+    tweeterData.to_csv(tweeterFilename, index=False)
+    tweetData.to_csv(tweetFilename, index=False)
 
 
 if __name__ == '__main__':
@@ -44,26 +47,31 @@ if __name__ == '__main__':
     tweeterFileName = 'tweeter_data.csv'
     if not os.path.exists(tweetFileName):
         setupCSVFiles(tweetFileName, tweeterFileName)
-    myParser = setupParser(tweetFileName, tweeterFileName)
+    myFpl = FplData()
+    myFpl.pullFplData()
+    players = myFpl.getPlayerNames()
+    myParser = setupParser(tweetFileName, tweeterFileName, players)
     myAPI = TwitterAPI()
-    players = ['Jota']
     tweetsCounter = 0
-    for player in tqdm.tqdm(players):
-        nextToken = None
-        flag = True
-        while flag:
-            response = myAPI.makeQuery(query=player, nextToken=nextToken)
-            n = myParser.parseJSONResult(response)
-            tweetsCounter += n
-            if 'next_token' in response[0]['meta']:
-                time.sleep(5)
-                nextToken = response[0]['meta']['next_token']
-            else:
-                flag = False
-                removeDuplicates(tweetFileName, tweeterFileName)
-                time.sleep(5)
+    myQuery = 'FPL'
+    nextToken = None
+    flag = True
+    while flag:
+        response = myAPI.makeQuery(query=myQuery, nextToken=nextToken)
+        n = myParser.parseJSONResult(response)
+        tweetsCounter += n
+        if 'next_token' in response[0]['meta']:
+            time.sleep(5)
+            nextToken = response[0]['meta']['next_token']
+        else:
+            flag = False
+            removeDuplicates(tweetFileName, tweeterFileName)
+            time.sleep(5)
     print(f'Number of tweets pulled = {tweetsCounter}')
     tweetData = pd.read_csv(tweetFileName)
+    validAuthorIDs = tweetData.authorId.unique().tolist()
+    validAuthorIDs = list(map(str, validAuthorIDs))
     tweeterData = pd.read_csv(tweeterFileName)
-    tweeterData = tweeterData.sort_values('nTweets').drop_duplicates('authorId', keep='last')
-    tweeterData.to_csv(tweeterFileName)
+    # tweeterData = tweeterData.sort_values('nTweets').drop_duplicates('authorId', keep='last')
+    tweeterData = tweeterData[tweeterData['authorId'].isin(validAuthorIDs)]
+    tweeterData.to_csv(tweeterFileName, index=False)

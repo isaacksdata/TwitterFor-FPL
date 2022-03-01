@@ -37,7 +37,7 @@ class TweetFormatter:
     def getOriginalTweet(self) -> str:
         return self.tweet
 
-    def getProcessedTweet(self) -> list:
+    def getProcessedTweet(self) -> str:
         return self.processedTweet
 
     def processTweet(self) -> bool:

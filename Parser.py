@@ -12,17 +12,29 @@ class ResponseParser:
         self.tweetDataFileName = tweetDataFileName
         self.tweeterDataFileName = tweeterDataFileName
         self.jsonResult = None
-        self.Formatter = TweetFormatter(useSpellCheck=False, useLemma=True, removeStopWords=True)
+        self.Formatter = TweetFormatter(useSpellCheck=False, useLemma=False, removeStopWords=False)
         self.Formatter.setupNlp()
         self.Formatter.setupStopWords()
+        self.playerNames = None
+
+    def setPlayerNames(self, names: list):
+        self.playerNames = names
 
     def parseJSONResult(self, result: tuple) -> int:
         self.jsonResult, query = result
-        tweeters = self.jsonResult['includes']['users']
-        tweets = self.jsonResult['data']
-        self.parseTweeterData(tweeters)
-        self.parseTweetData(tweets, query)
+        try:
+            tweeters = self.jsonResult['includes']['users']
+            tweets = self.jsonResult['data']
+            self.parseTweeterData(tweeters)
+            self.parseTweetData(tweets, query)
+        except KeyError:
+            tweets = []
         return len(tweets)
+
+    def searchPlayers(self, text: str):
+        textList = text.split(' ')
+        mentionedPlayers = [player for player in self.playerNames if player in textList]
+        return mentionedPlayers
 
     def parseTweetData(self, tweets: list, query: str):
         csvFile = open(self.tweetDataFileName, "a", newline="", encoding='utf-8')
@@ -33,6 +45,7 @@ class ResponseParser:
             except AssertionError:
                 pass
             else:
+
                 metrics = tweet['public_metrics']
                 nReTweets = metrics['retweet_count']
                 nReplies = metrics['reply_count']
@@ -41,20 +54,26 @@ class ResponseParser:
                 engagement = self.getEngagement(nReTweets, nReplies, nLikes, nQuotes)
                 self.Formatter.setTweet(tweet['text'])
                 self.Formatter.processTweet()
-                newData = [
-                    tweet['author_id'],
-                    tweet['id'],
-                    query,
-                    tweet['lang'],
-                    tweet['created_at'],
-                    nReTweets,
-                    nReplies,
-                    nLikes,
-                    nQuotes,
-                    engagement,
-                    tweet['text'],
-                    ' '.join(self.Formatter.getProcessedTweet())]
-                csvWriter.writerow(newData)
+                formattedTweet = self.Formatter.getProcessedTweet()
+                if isinstance(formattedTweet, list):
+                    ' '.join(formattedTweet)
+                players = self.searchPlayers(formattedTweet)
+                for player in players:
+                    newData = [
+                        tweet['author_id'],
+                        tweet['id'],
+                        query,
+                        player,
+                        tweet['lang'],
+                        tweet['created_at'],
+                        nReTweets,
+                        nReplies,
+                        nLikes,
+                        nQuotes,
+                        engagement,
+                        tweet['text'],
+                        formattedTweet]
+                    csvWriter.writerow(newData)
         csvFile.close()
 
     def getEngagement(self, nReTweets: int, nReplies: int, nLikes: int, nQuotes: int) -> float:
