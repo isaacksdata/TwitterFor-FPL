@@ -47,13 +47,22 @@ class MyData:
         data = self.getTwitterData()
         idx = random.choice(list(range(data.shape[0])))
         tweet = data.loc[idx, 'text']
+        formattedTweet = data.loc[idx, 'formattedText']
         tweetId = data.loc[idx, 'tweetId']
         player = data.loc[idx, 'player']
-        return tweet, tweetId, player
+        return tweet, formattedTweet, tweetId, player
 
     def updateTweetClassification(self, tweetId: int, label: int):
         idx = self.twitterData[self.twitterData['tweetId'] == tweetId].index.tolist()[0]
         self.twitterData.loc[idx, 'class'] = label
+
+    def onSaveTwitterData(self):
+        try:
+            self.twitterData.to_csv('../tweet_data.csv')
+        except Exception:
+            return False
+        else:
+            return True
 
 
 class myConfig:
@@ -114,6 +123,12 @@ def onClassification():
     return onClassify()
 
 
+@app.route('/saveTwitterData', methods=['POST'])
+def onSaveTwitterData():
+    response = myData.onSaveTwitterData()
+    assert response
+    return replotPlayerFrequency(cfg)
+
 
 @app.route('/returnToPlots', methods=['POST'])
 def showPlots():
@@ -135,9 +150,9 @@ def index():
 
 @app.route("/classifyTweets", methods=['POST'])
 def onClassify():
-    tweet, tweetId, player = myData.getTweet()
+    tweet, formattedTweet, tweetId, player = myData.getTweet()
     cfg.setTweetId(tweetId)
-    return render_template('classify.html', tweet=tweet, player=player)
+    return render_template('classify.html', tweet=tweet, player=player, formattedTweet=formattedTweet)
 
 
 @app.route('/nPlayers', methods=['POST'])
@@ -192,6 +207,7 @@ def plotSubplots(data: pd.DataFrame, fplData: pd.DataFrame,  nPlayers: int, posi
     fig.update_layout(height=600, width=800, title_text="Side By Side Subplots")
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     return graphJSON
+
 
 if __name__ == '__main__':
     app.run()
