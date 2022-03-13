@@ -1,0 +1,20 @@
+<!doctype html>
+<html>
+<head>
+    <link rel="stylesheet" href='/static/classify.css'/>
+</head>
+<body>
+<h1>Sentiment classification of FPL tweets</h1>
+<form method="post" action="/returnToPlots">
+    <input type="submit" name="back_button" value="Back">
+</form>
+<form method="post" action="/submitClassification">
+    <input type="submit" name="classify_button" value="Positive">
+    <input type="submit" name="classify_button" value="Negative">
+    <input type="submit" name="classify_button" value="Don't Know">
+    <input type="submit" name="classify_button" value="Skip">
+</form>
+<p>Player in focus is {{player}}</p>
+<p>{{tweet}}</p>
+</body>
+</html>
