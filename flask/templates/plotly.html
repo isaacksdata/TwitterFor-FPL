@@ -1,0 +1,30 @@
+<!doctype html>
+<html>
+ <head>
+    <link rel="stylesheet" href='/static/main.css' />
+  </head>
+ <body>
+  <h1>Top {{nPlayers}} Most Popular Players in Tweets from {{nTweets}} tweets</h1>
+  <form method="post" action="/classifyTweets">
+      <input type="submit" name="classify_button" value="classify">
+  </form>
+  <form method="post" action="/newPosition">
+   <input type="submit" name="position_button" value="GKP">
+   <input type="submit" name="position_button" value="DEF">
+   <input type="submit" name="position_button" value="MID">
+   <input type="submit" name="position_button" value="FWD">
+  </form>
+  <p>Select which position to view</p>
+  <form method="POST" action="/nPlayers">
+    <input name="nPlayers">
+    <input type="submit">
+</form>
+  <div id='chart' class='chart'></div>
+
+ </body>
+<script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
+<script type='text/javascript'>
+  var graphs = {{graphJSON | safe}};
+  Plotly.plot('chart',graphs,{});
+</script>
+</html>
