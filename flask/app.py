@@ -9,6 +9,8 @@ import numpy as np
 import sys
 from pathlib import Path
 import random
+import os
+from os.path import join
 
 
 file = Path(__file__).resolve()
@@ -19,13 +21,16 @@ from FplApi import FplData
 
 app = Flask(__name__)
 
+
 class MyData:
     def __init__(self):
         self.twitterData = None
         self.fplData = None
 
-    def loadTwitterData(self):
-        self.twitterData = pd.read_csv('../tweet_data.csv')
+    def loadTwitterData(self, directory: str = None):
+        directory = '..' if directory is None else directory
+        contents = [join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn if 'tweet_data.csv' in f][0]
+        self.twitterData = pd.read_csv(contents)
         if 'class' not in self.twitterData.columns:
             self.twitterData['class'] = -1
 
@@ -62,7 +67,7 @@ class MyData:
 
     def onSaveTwitterData(self):
         try:
-            self.twitterData.to_csv('../tweet_data.csv')
+            self.twitterData.to_csv(join(str(root), 'data/tweet_data.csv'))
         except Exception:
             return False
         else:
@@ -95,7 +100,7 @@ class myConfig:
 
 
 myData = MyData()
-myData.loadTwitterData()
+myData.loadTwitterData('/Users/isaackitchen-smith/PycharmProjects/FPLTwitterScraper')
 myData.loadFplData()
 cfg = myConfig()
 
