@@ -56,6 +56,10 @@ class MyData:
         idx = self.twitterData[self.twitterData['tweetId'] == tweetId].index.tolist()[0]
         self.twitterData.loc[idx, 'class'] = label
 
+    def deleteTweetEntry(self, tweetId: int):
+        idx = self.twitterData[self.twitterData['tweetId'] == tweetId].index
+        self.twitterData.drop(idx, axis=0, inplace=True)
+
     def onSaveTwitterData(self):
         try:
             self.twitterData.to_csv('../tweet_data.csv')
@@ -113,13 +117,16 @@ def onClassification():
     tweetId = cfg.getTweetId()
     assert tweetId is not None
     submittedClass = request.form['classify_button']
-    if submittedClass == 'Positive':
-        label = 1
-    elif submittedClass == 'Negative':
-        label = 0
+    if submittedClass == 'Delete':
+        myData.deleteTweetEntry(tweetId)
     else:
-        label = -1
-    myData.updateTweetClassification(tweetId, label)
+        if submittedClass == 'Positive':
+            label = 1
+        elif submittedClass == 'Negative':
+            label = 0
+        else:
+            label = -1
+        myData.updateTweetClassification(tweetId, label)
     return onClassify()
 
 
