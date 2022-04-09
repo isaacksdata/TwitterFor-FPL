@@ -11,6 +11,7 @@ from pathlib import Path
 import random
 import os
 from os.path import join
+import datetime
 
 
 file = Path(__file__).resolve()
@@ -197,6 +198,58 @@ def subsetDataByPosition(tweetData: pd.DataFrame, fplData: pd.DataFrame, positio
 #     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
 #     return graphJSON
 
+def convertTimeStamp(date: str, inputFormat: str = '%Y-%m-%dT%H:%M:%S.%fZ', outputFormat: str = '%Y-%m-%d') -> str:
+    """
+    Convert an inout date from one format to another
+    :param date: the date to reformat - should be a string
+    :type date: str
+    :param inputFormat: date format of the input string - see https://docs.python.org/3/library/datetime.html for codes
+    :type inputFormat: str
+    :param outputFormat: date format of output string
+    :type outputFormat: str
+    :return: reformatted date
+    :rtype: str
+    """
+    assert isinstance(date, str)
+    return datetime.datetime.strptime(date, inputFormat).strftime(outputFormat)
+
+
+def addMissingDates(data: pd.DataFrame, col: str = 'date', defaulValue=0, dateFormat: str = '%Y-%m-%d',
+                    valueCol: str = 'counts') -> pd.DataFrame:
+    """
+    Provided with a dataframe with a column containing dates, the earliest and latest dates are found and in between
+    dates not already in the data are given a default value
+    :param data: input dataframe
+    :type data: pd.DataFrame
+    :param col: column name containing dates
+    :type col: str
+    :param defaulValue: value to give to missing dates
+    :type defaulValue: str or int or float
+    :param dateFormat: format of the dates for parsing
+    :type dateFormat: str
+    :param valueCol: name of the column containing some values related to the dates
+    :type valueCol: str
+    :return:
+    :rtype:
+    """
+    dates = data[col].to_list()
+    firstDate = datetime.datetime.strptime(min(dates), dateFormat)
+    lastDate = datetime.datetime.strptime(max(dates), datetime)
+    currentDate = firstDate
+    betweenDates = []
+    while currentDate < lastDate:
+        d = currentDate.strftime(dateFormat)
+        if d not in dates:
+            betweenDates.append(d)
+        currentDate += datetime.timedelta(days=1)  # todo type of incrememnt should be an option
+    betweenDF = pd.DataFrame({
+        col: betweenDates,
+        valueCol: [defaulValue] * len(betweenDates)
+    })
+    data = pd.concat([data, betweenDF])
+    data.sort_values(col, inplace=True)
+    return data
+
 
 def plotSubplots(data: pd.DataFrame, fplData: pd.DataFrame,  nPlayers: int, position: str):
     playerData = subsetDataByPosition(data, fplData, position)
@@ -204,7 +257,11 @@ def plotSubplots(data: pd.DataFrame, fplData: pd.DataFrame,  nPlayers: int, posi
                                                                                       ascending=False).iloc[
                :nPlayers, ]
     sentData = data.groupby(['class']).size().reset_index(name='counts')
-    fig = make_subplots(rows=2, cols=1)
+    dateData = data.copy()
+    dateData['date'] = dateData['dateCreated'].map(convertTimeStamp)
+    dateData = dateData.groupby(['date']).size().reset_index(name='counts')
+    dateData = addMissingDates(dateData)
+    fig = make_subplots(rows=3, cols=1)
 
     fig.add_trace(
         go.Bar(x=playerData['player'], y=playerData['counts']),
@@ -216,7 +273,12 @@ def plotSubplots(data: pd.DataFrame, fplData: pd.DataFrame,  nPlayers: int, posi
         row=2, col=1
     )
 
-    fig.update_layout(height=600, width=800, title_text="Side By Side Subplots")
+    fig.add_trace(
+        go.Scatter(x=dateData['date'], y=dateData['counts']),
+        row=3, col=1
+    )
+
+    fig.update_layout(height=1000, width=1000, title_text="Side By Side Subplots")
     graphJSON = json.dumps(fig, cls=plotly.utils.PlotlyJSONEncoder)
     return graphJSON
 

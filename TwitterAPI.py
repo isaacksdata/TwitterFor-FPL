@@ -11,7 +11,7 @@ class TwitterAPI:
         self.start_time = datetime.datetime.today() - datetime.timedelta(days=6.5)
         self.start_time = self.start_time.strftime('%Y-%m-%dT%H:%M:%S.000Z')
         self.end_time = datetime.datetime.now().strftime('%Y-%m-%dT%H:%M:%S.000Z')
-        time.sleep(10)
+        time.sleep(15)
 
     def auth(self):
         auth = Authoriser()
@@ -46,7 +46,12 @@ class TwitterAPI:
         response = requests.request("GET", url, headers=headers, params=params)
         print("Endpoint Response Code: " + str(response.status_code))
         if response.status_code != 200:
-            raise Exception(response.status_code, response.text)
+            print(f'ERROR : {response.status_code}, :  {response.text}\nMinusing an hour' )
+            d = datetime.datetime.strptime(params['end_time'], '%Y-%m-%dT%H:%M:%S.%fZ')
+            newD = d - datetime.timedelta(hours=1)
+            params['end_time'] = newD.strftime('%Y-%m-%dT%H:%M:%S.%fZ')
+            response = requests.request("GET", url, headers=headers, params=params)
+            print("Endpoint Response Code: " + str(response.status_code))
         return response.json()
 
     def getKeyword(self, query: str = None) -> str:
