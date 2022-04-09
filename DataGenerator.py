@@ -43,8 +43,8 @@ def removeDuplicates(tweetFilename: str, tweeterFilename: str):
 
 
 if __name__ == '__main__':
-    tweetFileName = 'tweet_data.csv'
-    tweeterFileName = 'tweeter_data.csv'
+    tweetFileName = 'data/tweet_data.csv'
+    tweeterFileName = 'data/tweeter_data.csv'
     if not os.path.exists(tweetFileName):
         setupCSVFiles(tweetFileName, tweeterFileName)
     myFpl = FplData()
