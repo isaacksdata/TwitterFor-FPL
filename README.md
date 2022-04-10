@@ -7,4 +7,4 @@ Explore the use of tweets for informing fantasy football decisions
 - Gather tweets over several timepoints and then split use some fo training / testing - validation should be seperate 
 set of of tweets from timepoint not considered for the training
 - Test NLP models
-- plot of tweets by time
+- plot of tweets by time - change the unit of time
