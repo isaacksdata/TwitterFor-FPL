@@ -1,30 +1,42 @@
 <!doctype html>
 <html>
- <head>
-    <link rel="stylesheet" href='/static/main.css' />
-  </head>
- <body>
-  <h1>Top {{nPlayers}} Most Popular Players in Tweets from {{nTweets}} tweets</h1>
-  <form method="post" action="/classifyTweets">
-      <input type="submit" name="classify_button" value="classify">
-  </form>
-  <form method="post" action="/newPosition">
-   <input type="submit" name="position_button" value="GKP">
-   <input type="submit" name="position_button" value="DEF">
-   <input type="submit" name="position_button" value="MID">
-   <input type="submit" name="position_button" value="FWD">
-  </form>
-  <p>Select which position to view</p>
-  <form method="POST" action="/nPlayers">
+<head>
+    <link rel="stylesheet" href='/static/main.css'/>
+</head>
+<body>
+<h1>Top {{nPlayers}} Most Popular Players in Tweets from {{nTweets}} tweets</h1>
+<form method="post" action="/classifyTweets">
+    <input type="submit" name="classify_button" value="classify">
+</form>
+<form method="post" action="/newPosition">
+    <button name="position_button" value="GKP" class="button gkp">GKP</button>
+    <button name="position_button" value="DEF" class="button def">DEF</button>
+    <button name="position_button" value="MID" class="button mid">MID</button>
+    <button name="position_button" value="FWD" class="button fwd">FWD</button>
+<!--    <input type="button" name="position_button" class="anyButton" id="ID" value="GKP"/>-->
+<!--    <button type="submit" name="position_button" id="GKP"></button>-->
+<!--    <input type="submit" name="position_button" value="DEF">-->
+<!--    <input type="submit" name="position_button" value="MID">-->
+<!--    <input type="submit" name="position_button" value="FWD">-->
+</form>
+<p>Select which position to view</p>
+<form method="POST" action="/nPlayers">
     <input name="nPlayers">
     <input type="submit">
 </form>
-  <div id='chart' class='chart'></div>
-
- </body>
+<div id='chart' class='chart'></div>
+<form method="post" action="/newTimeUnit">
+    <input type="submit" name="time_button" value="Year">
+    <input type="submit" name="time_button" value="Month">
+    <input type="submit" name="time_button" value="Day (decimal)">
+    <input type="submit" name="time_button" value="Day (name)">
+    <input type="submit" name="time_button" value="Date">
+</form>
+</body>
 <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>
 <script type='text/javascript'>
   var graphs = {{graphJSON | safe}};
   Plotly.plot('chart',graphs,{});
+
 </script>
 </html>

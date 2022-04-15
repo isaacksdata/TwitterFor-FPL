@@ -22,6 +22,7 @@ from FplApi import FplData
 
 app = Flask(__name__)
 
+daysOfTheWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
 
 class MyData:
     def __init__(self):
@@ -80,6 +81,7 @@ class myConfig:
         self.nPlayers = 20
         self.position = 'MID'
         self.tweetId = None
+        self.timeFormat = '%Y-%m-%d'
 
     def setNPlayers(self, value: int):
         self.nPlayers = value
@@ -99,6 +101,12 @@ class myConfig:
     def getTweetId(self):
         return self.tweetId
 
+    def setTimeFormat(self, newTimeFormat: str):
+        self.timeFormat = newTimeFormat
+
+    def getTimeFormat(self):
+        return self.timeFormat
+
 
 myData = MyData()
 myData.loadTwitterData('/Users/isaackitchen-smith/PycharmProjects/FPLTwitterScraper')
@@ -106,17 +114,17 @@ myData.loadFplData()
 cfg = myConfig()
 
 
-def replotPlayerFrequency(cfg):
+def replotSubplots(cfg):
     data = myData.getTwitterData()
     fplData = myData.getFplData()
-    graphJSON = plotSubplots(data, fplData,  cfg.getNPlayers(), cfg.getPosition())
+    graphJSON = plotSubplots(data, fplData,  cfg.getNPlayers(), cfg.getPosition(), timeFormat=cfg.getTimeFormat())
 
     return render_template('plotly.html', graphJSON=graphJSON, nTweets=data.shape[0], nPlayers=cfg.getNPlayers())
 
 
 @app.route('/')
 def root():
-    return replotPlayerFrequency(cfg)
+    return replotSubplots(cfg)
 
 @app.route('/submitClassification', methods=['POST'])
 def onClassification():
@@ -140,13 +148,13 @@ def onClassification():
 def onSaveTwitterData():
     response = myData.onSaveTwitterData()
     assert response
-    return replotPlayerFrequency(cfg)
+    return replotSubplots(cfg)
 
 
 @app.route('/returnToPlots', methods=['POST'])
 def showPlots():
     if request.method == 'POST':
-        return replotPlayerFrequency(cfg)
+        return replotSubplots(cfg)
     else:
         pass
 
@@ -156,7 +164,7 @@ def index():
     if request.method == 'POST':
         pos = request.form['position_button']
         cfg.setPosition(pos)
-        return replotPlayerFrequency(cfg)
+        return replotSubplots(cfg)
     else:
         print('No GET method is enabled')
 
@@ -172,7 +180,22 @@ def onClassify():
 def changeNumberOfPlayers():
     nPlayers = int(request.form['nPlayers'])
     cfg.setNPlayers(nPlayers)
-    return replotPlayerFrequency(cfg)
+    return replotSubplots(cfg)
+
+@app.route('/newTimeUnit', methods=['POST'])
+def changeTimeUnit():
+    timeUnit = request.form['time_button']
+    if timeUnit == 'Year':
+        cfg.setTimeFormat('%Y')
+    elif timeUnit == 'Month':
+        cfg.setTimeFormat('%B')
+    elif timeUnit == 'Day (decimal)':
+        cfg.setTimeFormat('%d')
+    elif timeUnit == 'Day (name)':
+        cfg.setTimeFormat('%A')
+    else:
+        cfg.setTimeFormat('%Y-%m-%d')
+    return replotSubplots(cfg)
 
 
 def subsetDataByPosition(tweetData: pd.DataFrame, fplData: pd.DataFrame, position: str):
@@ -234,14 +257,29 @@ def addMissingDates(data: pd.DataFrame, col: str = 'date', defaulValue=0, dateFo
     """
     dates = data[col].to_list()
     firstDate = datetime.datetime.strptime(min(dates), dateFormat)
-    lastDate = datetime.datetime.strptime(max(dates), datetime)
+    lastDate = datetime.datetime.strptime(max(dates), dateFormat)
     currentDate = firstDate
     betweenDates = []
-    while currentDate < lastDate:
-        d = currentDate.strftime(dateFormat)
-        if d not in dates:
-            betweenDates.append(d)
-        currentDate += datetime.timedelta(days=1)  # todo type of incrememnt should be an option
+    if dateFormat == '%A':  # local day time e.g. Monday, Tuesday ....
+        betweenDates = [d for d in daysOfTheWeek if d not in dates]
+    else:
+        while currentDate < lastDate:
+            d = currentDate.strftime(dateFormat)
+            if d not in dates:
+                betweenDates.append(d)
+            if dateFormat == '%Y':
+                currentDate += datetime.timedelta(days=365)
+            elif dateFormat == '%B':
+                currentMonth = currentDate.strftime('%B')
+                for i in range(27, 32):
+                    currentDate += datetime.timedelta(days=i)
+                    if currentDate.strftime('%B') != currentMonth:
+                        break
+            elif dateFormat == '%d':
+                currentDate += datetime.timedelta(days=1)
+            else:
+                currentDate += datetime.timedelta(days=1)
+
     betweenDF = pd.DataFrame({
         col: betweenDates,
         valueCol: [defaulValue] * len(betweenDates)
@@ -251,16 +289,18 @@ def addMissingDates(data: pd.DataFrame, col: str = 'date', defaulValue=0, dateFo
     return data
 
 
-def plotSubplots(data: pd.DataFrame, fplData: pd.DataFrame,  nPlayers: int, position: str):
+def plotSubplots(data: pd.DataFrame, fplData: pd.DataFrame,  nPlayers: int, position: str,
+                 timeFormat: str = '%Y-%m-%d'):
     playerData = subsetDataByPosition(data, fplData, position)
     playerData = playerData.groupby(['player']).size().reset_index(name='counts').sort_values(by='counts',
                                                                                       ascending=False).iloc[
                :nPlayers, ]
     sentData = data.groupby(['class']).size().reset_index(name='counts')
     dateData = data.copy()
-    dateData['date'] = dateData['dateCreated'].map(convertTimeStamp)
+    # dateData['date'] = dateData['dateCreated'].map(convertTimeStamp)
+    dateData['date'] = dateData['dateCreated'].apply(lambda x: convertTimeStamp(x, outputFormat=timeFormat))
     dateData = dateData.groupby(['date']).size().reset_index(name='counts')
-    dateData = addMissingDates(dateData)
+    dateData = addMissingDates(dateData, dateFormat=timeFormat)
     fig = make_subplots(rows=3, cols=1)
 
     fig.add_trace(
