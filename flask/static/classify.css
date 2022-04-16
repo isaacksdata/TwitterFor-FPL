@@ -5,15 +5,80 @@ body {
   margin-right: 200px;
   }
 
-p {
+.p {
   font-family: Georgia, serif;
   font-size: 1.2em;
-  color: DarkSlateGray;
   margin-left: 10px;
+  margin-right: 300px;
   }
+
+
+ .p.rawtweet {
+    color: DarkSlateGray;
+ }
+
+ .p.formattedtweet {
+    color: DarkSlateGray;
+ }
+
+
+ .p.player {
+      color: FireBrick;
+ }
 
 h1 {
   font-family: Verdana, Geneva, sans-serif;
   font-size: 2.5em;
   color: FireBrick;
   }
+
+.button {
+  display: inline-block;
+  padding: 15px 25px;
+  font-size: 24px;
+  cursor: pointer;
+  text-align: center;
+  text-decoration: none;
+  outline: none;
+  color: #fff;
+  background-color: #4CAF50;
+  border: none;
+  border-radius: 15px;
+  box-shadow: 0 9px #999;
+  transition-duration: 0.2s;
+}
+
+
+.btn-group .button {
+  background-color: #4CAF50; /* Green */
+  border: none;
+  color: white;
+  padding: 15px 32px;
+  text-align: center;
+  text-decoration: none;
+  display: inline-block;
+  font-size: 16px;
+  cursor: pointer;
+  float: left;
+}
+
+.button:hover {background-color: #f44336}
+
+.btn-group .button:hover {
+  background-color: #3e8e41;
+}
+
+.button.back {
+    background-color: #f44336;
+    position: absolute;
+    right: 300px;
+    top: 200px;
+}
+
+.button.save {
+    background-color: #e7e7e7;
+    position: absolute;
+    right: 150px;
+    top: 200px;
+    color: #555555;
+}

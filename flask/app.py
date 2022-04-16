@@ -16,13 +16,21 @@ import datetime
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
-sys.path.append(str(root))
+root = str(root)
+sys.path.append(root)
 
 from FplApi import FplData
 
 app = Flask(__name__)
 
 daysOfTheWeek = ['Monday', 'Tuesday', 'Wednesday', 'Thursday', 'Friday', 'Saturday', 'Sunday']
+
+
+def getRoot():
+    file = Path(__file__).resolve()
+    parent, root = file.parent, file.parents[1]
+    root = str(root)
+    return root
 
 class MyData:
     def __init__(self):
@@ -69,7 +77,7 @@ class MyData:
 
     def onSaveTwitterData(self):
         try:
-            self.twitterData.to_csv(join(str(root), 'data/tweet_data.csv'))
+            self.twitterData.to_csv(join(getRoot(), 'data/tweet_data.csv'))
         except Exception:
             return False
         else:
@@ -138,6 +146,8 @@ def onClassification():
             label = 1
         elif submittedClass == 'Negative':
             label = 0
+        elif submittedClass == 'Not FPL':
+            label = np.nan
         else:
             label = -1
         myData.updateTweetClassification(tweetId, label)
@@ -296,6 +306,7 @@ def plotSubplots(data: pd.DataFrame, fplData: pd.DataFrame,  nPlayers: int, posi
                                                                                       ascending=False).iloc[
                :nPlayers, ]
     sentData = data.groupby(['class']).size().reset_index(name='counts')
+    sentData = sentData[sentData['class'] != np.nan]  # remove tweets classified as not FPL related
     dateData = data.copy()
     # dateData['date'] = dateData['dateCreated'].map(convertTimeStamp)
     dateData['date'] = dateData['dateCreated'].apply(lambda x: convertTimeStamp(x, outputFormat=timeFormat))

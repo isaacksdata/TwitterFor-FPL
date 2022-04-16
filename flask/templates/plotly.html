@@ -6,7 +6,8 @@
 <body>
 <h1>Top {{nPlayers}} Most Popular Players in Tweets from {{nTweets}} tweets</h1>
 <form method="post" action="/classifyTweets">
-    <input type="submit" name="classify_button" value="classify">
+<!--    <input type="submit" name="classify_button" value="classify">-->
+    <button name="classify_button" value="classify" class="button classify">classify</button>
 </form>
 <form method="post" action="/newPosition">
     <button name="position_button" value="GKP" class="button gkp">GKP</button>
@@ -19,18 +20,19 @@
 <!--    <input type="submit" name="position_button" value="MID">-->
 <!--    <input type="submit" name="position_button" value="FWD">-->
 </form>
-<p>Select which position to view</p>
+<label class="label position"> Select which position to view</label>
 <form method="POST" action="/nPlayers">
     <input name="nPlayers">
     <input type="submit">
 </form>
 <div id='chart' class='chart'></div>
 <form method="post" action="/newTimeUnit">
-    <input type="submit" name="time_button" value="Year">
-    <input type="submit" name="time_button" value="Month">
-    <input type="submit" name="time_button" value="Day (decimal)">
-    <input type="submit" name="time_button" value="Day (name)">
-    <input type="submit" name="time_button" value="Date">
+    <label class="label time"> Select which time scale to use</label>
+    <button name="time_button" value="Year" class="button year">Year</button>
+    <button name="time_button" value="Month" class="button month">Month</button>
+    <button name="time_button" value="Day (dec)" class="button daydec">Day (dec)</button>
+    <button name="time_button" value="Day (name)" class="button dayname">Day (name)</button>
+    <button name="time_button" value="Date" class="button date">Date</button>
 </form>
 </body>
 <script src='https://cdn.plot.ly/plotly-latest.min.js'></script>

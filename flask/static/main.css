@@ -5,11 +5,19 @@ body {
   margin-right: 200px;
   }
 
-p {
+.label {
   font-family: Georgia, serif;
-  font-size: 1.2em;
+  font-size: 2.0em;
   color: DarkSlateGray;
-  margin-left: 500px;
+  margin-right: 30px;
+  margin-top: 30px;
+  }
+
+
+.label.position {
+  position: absolute;
+  right: 100px;
+  top: 300px
   }
 
 h1 {
@@ -66,3 +74,59 @@ h1 {
     right: 100px;
     top: 400px;
 }
+
+.button.classify {
+    background-color: FireBrick;
+    padding: 20px 30px;
+    font-size: 28px;
+    position: absolute;
+    right: 300px;
+    top: 600px;
+}
+
+.label.time {
+  position: absolute;
+  right: 100px;
+  top: 800px
+  }
+
+.button.year {
+    background-color: #008CBA;
+    border-radius: 12px;
+    position: absolute;
+    right: 550px;
+    top: 900px;
+}
+
+.button.month {
+    background-color: #008CBA;
+    border-radius: 12px;
+    position: absolute;
+    right: 400px;
+    top: 900px;
+}
+
+.button.date {
+    background-color: #008CBA;
+    border-radius: 12px;
+    position: absolute;
+    right: 250px;
+    top: 900px;
+}
+
+.button.daydec {
+    background-color: #008CBA;
+    border-radius: 12px;
+    position: absolute;
+    right: 475px;
+    top: 1000px;
+}
+
+.button.dayname {
+    background-color: #008CBA;
+    border-radius: 12px;
+    position: absolute;
+    right: 200px;
+    top: 1000px;
+}
+

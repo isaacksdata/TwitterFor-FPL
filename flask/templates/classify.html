@@ -6,20 +6,30 @@
 <body>
 <h1>Sentiment classification of FPL tweets</h1>
 <form method="post" action="/returnToPlots">
-    <input type="submit" name="back_button" value="Back">
+    <button class="button back" value="Back" name="back_button">Back</button>
 </form>
 <form method="post" action="/submitClassification">
-    <input type="submit" name="classify_button" value="Positive">
-    <input type="submit" name="classify_button" value="Negative">
-    <input type="submit" name="classify_button" value="Don't Know">
-    <input type="submit" name="classify_button" value="Skip">
-    <input type="submit" name="classify_button" value="Delete">
+    <div class="btn group">
+        <button class="button" value="Positive" name="classify_button">Positive</button>
+        <button class="button" value="Negative" name="classify_button">Negative</button>
+        <button class="button" value="Don't Know" name="classify_button">Don't Know</button>
+        <button class="button" value="Not FPL" name="classify_button">Not FPL</button>
+        <button class="button" value="Skip" name="classify_button">Skip</button>
+        <button class="button" value="Delete" name="classify_button">Delete</button>
+    </div>
+
+
+<!--    <input type="submit" name="classify_button" value="Positive">-->
+<!--    <input type="submit" name="classify_button" value="Negative">-->
+<!--    <input type="submit" name="classify_button" value="Don't Know">-->
+<!--    <input type="submit" name="classify_button" value="Skip">-->
+<!--    <input type="submit" name="classify_button" value="Delete">-->
 </form>
-<p>Player in focus is {{player}}</p>
-<p>{{tweet}}</p>
-<p>{{formattedTweet}}</p>
+<p class="p player">Player in focus is {{player}}</p>
+<p class="p rawtweet">{{tweet}}</p>
+<p class="p formattedtweet">{{formattedTweet}}</p>
 <form method="post" action="/saveTwitterData">
-    <input type="submit" name="save_button" value="Save">
+    <button class="button save" value="Save" name="save_button">Save</button>
 </form>
 </body>
 </html>
