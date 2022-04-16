@@ -67,6 +67,9 @@ class MyData:
         player = data.loc[idx, 'player']
         return tweet, formattedTweet, tweetId, player
 
+    def resetTweetClassifications(self):
+        self.twitterData['class'] = -1
+
     def updateTweetClassification(self, tweetId: int, label: int):
         idx = self.twitterData[self.twitterData['tweetId'] == tweetId].index.tolist()[0]
         self.twitterData.loc[idx, 'class'] = label
