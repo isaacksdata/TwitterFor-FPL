@@ -36,8 +36,8 @@ def removeDuplicates(tweetFilename: str, tweeterFilename: str):
     tweetData = pd.read_csv(tweetFilename)
     tweeterData = pd.read_csv(tweeterFilename)
     tweeterData = tweeterData.sort_values('nTweets').drop_duplicates('authorId', keep='last')
-    tweetData = tweetData.sort_values('dateCreated').drop_duplicates('tweetId', keep='last')
-    tweetData = tweetData.sort_values('engagement').drop_duplicates('formattedText', keep='first')
+    tweetData = tweetData.sort_values('dateCreated').drop_duplicates(subset=['text', 'player'], keep='last')
+    tweetData = tweetData.sort_values('engagement').drop_duplicates(subset=['text', 'player'], keep='first')
     tweeterData.to_csv(tweeterFilename, index=False)
     tweetData.to_csv(tweetFilename, index=False)
 
