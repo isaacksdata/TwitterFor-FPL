@@ -211,6 +211,9 @@ def index():
 def onClassify():
     tweet, formattedTweet, tweetId, player = myData.getTweet(data='label')
     cfg.setTweetId(tweetId)
+    tweet = tweet.replace('&gt;', '>')
+    tweet = tweet.replace('&le;', '<')
+    tweet = tweet.replace('&amp', '&')
     sentiment = nlpProcesser.predict(input=tweet)
     sentiment = f'{sentiment[0]["label"]} : {round(sentiment[0]["score"], 4)}'
     return render_template('classify.html', tweet=tweet, player=player, formattedTweet=formattedTweet,

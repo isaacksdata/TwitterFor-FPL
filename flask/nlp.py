@@ -3,13 +3,16 @@ from sklearn.model_selection import train_test_split
 from transformers import pipeline
 from typing import Union
 
+model_path = "cardiffnlp/twitter-xlm-roberta-base-sentiment"
+
+
 
 class myNLP:
     def __init__(self):
         self.model = None
 
     def loadModel(self, modelName: str = 'sentiment-analysis'):
-        model = pipeline(modelName)
+        model = pipeline(modelName, model=model_path, tokenizer=model_path)
         self.model = model
 
     def predict(self, input: Union[str, list]) -> list:
