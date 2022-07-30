@@ -20,6 +20,7 @@ root = str(root)
 sys.path.append(root)
 
 from FplApi import FplData
+from nlp import myNLP
 
 app = Flask(__name__)
 
@@ -36,19 +37,38 @@ class MyData:
     def __init__(self):
         self.twitterData = None
         self.fplData = None
+        self.labelTweetsData = None
 
     def loadTwitterData(self, directory: str = None):
         directory = '..' if directory is None else directory
         contents = [join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn if 'tweet_data.csv' in f][0]
         self.twitterData = pd.read_csv(contents)
+        self.twitterData = self.twitterData[
+            self.twitterData.columns.drop(list(self.twitterData.filter(regex='Unnamed')))]
         if 'class' not in self.twitterData.columns:
             self.twitterData['class'] = -1
+
+    def loadLabelTweets(self, directory: str = None):
+        directory = '..' if directory is None else directory
+        contents = [join(dp, f) for dp, dn, fn in os.walk(directory) for f in fn if 'labelledTweets.csv' in f][0]
+        self.labelTweetsData = pd.read_csv(contents)
+        self.labelTweetsData = self.labelTweetsData[
+            self.labelTweetsData.columns.drop(list(self.labelTweetsData.filter(regex='Unnamed')))]
+        
+    def getLabelTweets(self):
+        return self.labelTweetsData
 
     def loadFplData(self):
         self.fplData = self.getPlayerData()
 
-    def getTwitterData(self):
-        return self.twitterData
+    def getTwitterData(self, data: str = 'all'):
+        if data == 'all':
+            return self.twitterData
+        elif data == 'label':
+            return self.labelTweetsData
+        else:
+            print('Invalid data type!')
+            return None
 
     def getFplData(self):
         return self.fplData
@@ -58,8 +78,8 @@ class MyData:
         myFpl.pullFplData()
         return myFpl.getData()
 
-    def getTweet(self):
-        data = self.getTwitterData()
+    def getTweet(self, data: str = 'all'):
+        data = self.getTwitterData(data)
         idx = random.choice(list(range(data.shape[0])))
         tweet = data.loc[idx, 'text']
         formattedTweet = data.loc[idx, 'formattedText']
@@ -67,17 +87,20 @@ class MyData:
         player = data.loc[idx, 'player']
         return tweet, formattedTweet, tweetId, player
 
+    def resetTweetClassifications(self):
+        self.twitterData['class'] = -1
+
     def updateTweetClassification(self, tweetId: int, label: int):
-        idx = self.twitterData[self.twitterData['tweetId'] == tweetId].index.tolist()[0]
-        self.twitterData.loc[idx, 'class'] = label
+        idx = self.labelTweetsData[self.labelTweetsData['tweetId'] == tweetId].index.tolist()[0]
+        self.labelTweetsData.loc[idx, 'class'] = label
 
     def deleteTweetEntry(self, tweetId: int):
-        idx = self.twitterData[self.twitterData['tweetId'] == tweetId].index
-        self.twitterData.drop(idx, axis=0, inplace=True)
+        idx = self.labelTweetsData[self.labelTweetsData['tweetId'] == tweetId].index
+        self.labelTweetsData.drop(idx, axis=0, inplace=True)
 
     def onSaveTwitterData(self):
         try:
-            self.twitterData.to_csv(join(getRoot(), 'data/tweet_data.csv'))
+            self.labelTweetsData.to_csv(join(getRoot(), 'data/labelledTweets.csv'))
         except Exception:
             return False
         else:
@@ -118,14 +141,19 @@ class myConfig:
 
 myData = MyData()
 myData.loadTwitterData('/Users/isaackitchen-smith/PycharmProjects/FPLTwitterScraper')
+myData.loadLabelTweets('/Users/isaackitchen-smith/PycharmProjects/FPLTwitterScraper')
 myData.loadFplData()
 cfg = myConfig()
+nlpProcesser = myNLP()
+nlpProcesser.loadModel()
 
 
 def replotSubplots(cfg):
-    data = myData.getTwitterData()
+    data = myData.getTwitterData(data='all')
+    labelData = myData.getTwitterData(data='label')
     fplData = myData.getFplData()
-    graphJSON = plotSubplots(data, fplData,  cfg.getNPlayers(), cfg.getPosition(), timeFormat=cfg.getTimeFormat())
+    graphJSON = plotSubplots(data, labelData, fplData,  cfg.getNPlayers(), cfg.getPosition(),
+                             timeFormat=cfg.getTimeFormat())
 
     return render_template('plotly.html', graphJSON=graphJSON, nTweets=data.shape[0], nPlayers=cfg.getNPlayers())
 
@@ -181,9 +209,15 @@ def index():
 
 @app.route("/classifyTweets", methods=['POST'])
 def onClassify():
-    tweet, formattedTweet, tweetId, player = myData.getTweet()
+    tweet, formattedTweet, tweetId, player = myData.getTweet(data='label')
     cfg.setTweetId(tweetId)
-    return render_template('classify.html', tweet=tweet, player=player, formattedTweet=formattedTweet)
+    tweet = tweet.replace('&gt;', '>')
+    tweet = tweet.replace('&le;', '<')
+    tweet = tweet.replace('&amp', '&')
+    sentiment = nlpProcesser.predict(input=tweet)
+    sentiment = f'{sentiment[0]["label"]} : {round(sentiment[0]["score"], 4)}'
+    return render_template('classify.html', tweet=tweet, player=player, formattedTweet=formattedTweet,
+                           sentiment=sentiment)
 
 
 @app.route('/nPlayers', methods=['POST'])
@@ -299,13 +333,13 @@ def addMissingDates(data: pd.DataFrame, col: str = 'date', defaulValue=0, dateFo
     return data
 
 
-def plotSubplots(data: pd.DataFrame, fplData: pd.DataFrame,  nPlayers: int, position: str,
+def plotSubplots(data: pd.DataFrame, labelData: pd.DataFrame, fplData: pd.DataFrame,  nPlayers: int, position: str,
                  timeFormat: str = '%Y-%m-%d'):
     playerData = subsetDataByPosition(data, fplData, position)
     playerData = playerData.groupby(['player']).size().reset_index(name='counts').sort_values(by='counts',
                                                                                       ascending=False).iloc[
                :nPlayers, ]
-    sentData = data.groupby(['class']).size().reset_index(name='counts')
+    sentData = labelData.groupby(['class']).size().reset_index(name='counts')
     sentData = sentData[sentData['class'] != np.nan]  # remove tweets classified as not FPL related
     dateData = data.copy()
     # dateData['date'] = dateData['dateCreated'].map(convertTimeStamp)

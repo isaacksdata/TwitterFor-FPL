@@ -21,6 +21,10 @@ body {
     color: DarkSlateGray;
  }
 
+  .p.prediction {
+    color: #008CBA;
+ }
+
 
  .p.player {
       color: FireBrick;

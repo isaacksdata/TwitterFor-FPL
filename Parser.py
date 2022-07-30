@@ -37,7 +37,7 @@ class ResponseParser:
         return mentionedPlayers
 
     def parseTweetData(self, tweets: list, query: str):
-        csvFile = open(self.tweetDataFileName, "a", newline="", encoding='utf-8')
+        csvFile = open(self.tweetDataFileName, "a+", newline='')
         csvWriter = csv.writer(csvFile)
         for tweet in tqdm.tqdm(tweets, position=0, leave=True):
             try:
@@ -45,7 +45,6 @@ class ResponseParser:
             except AssertionError:
                 pass
             else:
-
                 metrics = tweet['public_metrics']
                 nReTweets = metrics['retweet_count']
                 nReplies = metrics['reply_count']
@@ -72,7 +71,8 @@ class ResponseParser:
                         nQuotes,
                         engagement,
                         tweet['text'],
-                        formattedTweet]
+                        formattedTweet,
+                        -1]
                     csvWriter.writerow(newData)
         csvFile.close()
 
