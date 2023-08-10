@@ -2,7 +2,7 @@ import unittest
 import spacy
 import string
 
-from TweetFormatting import TweetFormatter
+from DataEngineering.TweetFormatting import TweetFormatter
 
 punctuation = string.punctuation
 

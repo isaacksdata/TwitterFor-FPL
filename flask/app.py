@@ -2,7 +2,6 @@ from flask import Flask, render_template, request
 import pandas as pd
 import json
 import plotly
-import plotly.express as px
 from plotly.subplots import make_subplots
 import plotly.graph_objects as go
 import numpy as np
@@ -13,13 +12,16 @@ import os
 from os.path import join
 import datetime
 
+#todo - things to consider - need a way for different sentiment based on player in focus - perhaps by splitting sentence up into clauses?
+# todo - is there a way to direct attention to specific nouns in a sentence when doing sentiment analysis??
+
 
 file = Path(__file__).resolve()
 parent, root = file.parent, file.parents[1]
 root = str(root)
 sys.path.append(root)
 
-from FplApi import FplData
+from DataEngineering.FplApi import FplData
 from nlp import myNLP
 
 app = Flask(__name__)
@@ -47,6 +49,7 @@ class MyData:
             self.twitterData.columns.drop(list(self.twitterData.filter(regex='Unnamed')))]
         if 'class' not in self.twitterData.columns:
             self.twitterData['class'] = -1
+        self.twitterData.set_index('tweetId', inplace=True)
 
     def loadLabelTweets(self, directory: str = None):
         directory = '..' if directory is None else directory
@@ -80,19 +83,28 @@ class MyData:
 
     def getTweet(self, data: str = 'all'):
         data = self.getTwitterData(data)
-        idx = random.choice(list(range(data.shape[0])))
+        idx = random.choice(data.index.tolist())
+        while data.loc[idx, 'text'] in self.labelTweetsData.text.tolist():
+            idx = random.choice(data.index.tolist())
         tweet = data.loc[idx, 'text']
         formattedTweet = data.loc[idx, 'formattedText']
-        tweetId = data.loc[idx, 'tweetId']
         player = data.loc[idx, 'player']
-        return tweet, formattedTweet, tweetId, player
+        return tweet, formattedTweet, idx, player
 
     def resetTweetClassifications(self):
         self.twitterData['class'] = -1
 
     def updateTweetClassification(self, tweetId: int, label: int):
-        idx = self.labelTweetsData[self.labelTweetsData['tweetId'] == tweetId].index.tolist()[0]
-        self.labelTweetsData.loc[idx, 'class'] = label
+        row = self.twitterData.loc[tweetId, :]
+        cols = self.twitterData.columns.tolist()
+        cols.append('tweetId')
+        row = row.to_frame().T
+        row['tweetId'] = row.index
+        row['class'] = label
+        self.labelTweetsData = pd.concat([self.labelTweetsData, row[cols]])
+
+        # idx = self.labelTweetsData[self.labelTweetsData['tweetId'] == tweetId].index.tolist()[0]
+        # self.labelTweetsData.loc[idx, 'class'] = label
 
     def deleteTweetEntry(self, tweetId: int):
         idx = self.labelTweetsData[self.labelTweetsData['tweetId'] == tweetId].index
@@ -146,6 +158,7 @@ myData.loadFplData()
 cfg = myConfig()
 nlpProcesser = myNLP()
 nlpProcesser.loadModel()
+nlpProcesser.loadIronyModel()
 
 
 def replotSubplots(cfg):
@@ -173,11 +186,11 @@ def onClassification():
         if submittedClass == 'Positive':
             label = 1
         elif submittedClass == 'Negative':
-            label = 0
+            label = -1
         elif submittedClass == 'Not FPL':
             label = np.nan
         else:
-            label = -1
+            label = 0
         myData.updateTweetClassification(tweetId, label)
     return onClassify()
 
@@ -209,15 +222,17 @@ def index():
 
 @app.route("/classifyTweets", methods=['POST'])
 def onClassify():
-    tweet, formattedTweet, tweetId, player = myData.getTweet(data='label')
+    tweet, formattedTweet, tweetId, player = myData.getTweet(data='all')
     cfg.setTweetId(tweetId)
     tweet = tweet.replace('&gt;', '>')
     tweet = tweet.replace('&le;', '<')
     tweet = tweet.replace('&amp', '&')
     sentiment = nlpProcesser.predict(input=tweet)
+    irony = nlpProcesser.predict_irony(input=tweet)
     sentiment = f'{sentiment[0]["label"]} : {round(sentiment[0]["score"], 4)}'
+    irony = f'{irony[0]} : {round(irony[1], 4)}'
     return render_template('classify.html', tweet=tweet, player=player, formattedTweet=formattedTweet,
-                           sentiment=sentiment)
+                           sentiment=sentiment, irony=irony)
 
 
 @app.route('/nPlayers', methods=['POST'])
@@ -244,7 +259,7 @@ def changeTimeUnit():
 
 def subsetDataByPosition(tweetData: pd.DataFrame, fplData: pd.DataFrame, position: str):
     assert position in ['GKP', 'DEF', 'MID', 'FWD']
-    playerNames = fplData[fplData['position'] == position]['second_name'].tolist()
+    playerNames = fplData[fplData['position'] == position]['web_name'].tolist()
     tweetData = tweetData[tweetData['player'].isin(playerNames)]
     return tweetData
 

@@ -1,6 +1,6 @@
 import unittest
 
-from Authorisation import Authoriser
+from DataEngineering.Authorisation import Authoriser
 
 
 class TestUtilityFunctions(unittest.TestCase):

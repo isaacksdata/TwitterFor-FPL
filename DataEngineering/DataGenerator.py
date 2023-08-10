@@ -1,13 +1,11 @@
 import pandas as pd
 import csv
 import os
-import tqdm
 import time
-import random
 
-from TwitterAPI import TwitterAPI
-from Parser import ResponseParser
-from FplApi import FplData
+from DataEngineering.TwitterAPI import TwitterAPI
+from DataEngineering.Parser import ResponseParser
+from DataEngineering.FplApi import FplData
 
 
 def setupCSVFiles(tweetFilename: str, tweeterFilename: str):

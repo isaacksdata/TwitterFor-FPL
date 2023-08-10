@@ -2,7 +2,7 @@ import requests
 import datetime
 import time
 
-from Authorisation import Authoriser
+from DataEngineering.Authorisation import Authoriser
 
 
 class TwitterAPI:

@@ -2,7 +2,7 @@ import warnings
 import csv
 import tqdm
 
-from TweetFormatting import TweetFormatter
+from DataEngineering.TweetFormatting import TweetFormatter
 
 warnings.filterwarnings("ignore", category=FutureWarning)
 
